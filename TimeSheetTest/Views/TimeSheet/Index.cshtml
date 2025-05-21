@@ -1,0 +1,249 @@
+﻿@model TimeSheetTeste.Models.TimeSheetDto
+
+@{
+    ViewBag.Title = "Export TimeSheet";
+}
+
+<div class="block-header">
+    <h2><strong>INSERT TIMESHEET</strong></h2>
+</div>
+<!-- Input -->
+<div class="row clearfix">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+
+
+            <div class="body">
+
+                <div class="row clearfix">
+
+                    
+
+                    <div class="col-sm-12">
+                            <div class="form-group">
+                                <div class="form-line">
+                                    Project
+                                <select class="form-control" id="selectProject" asp-for="ProjectId" asp-items="@(new SelectList(@Model.listProject,"ProjectId","ProjectName"))"></select>
+                                </div>
+
+                            </div>
+
+
+                            <div class="form-group">
+                                <div class="form-line">
+                                    User
+                                <select class="form-control" id="selectUser" asp-for="UserId" asp-items="@(new SelectList(@Model.listUser,"UserId","UserName"))"></select>
+                                </div>
+
+                            </div>
+
+                            <div class="form-group">
+                                <div class="form-line">
+                                    Time Spent
+                                    <input type="text" id="timeSpent" asp-for="TimeSpent" class="form-control" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="form-line">
+                                    Date
+                                    <input type="text" id="workFedDate" asp-for="WorkfedDate" class="form-control" />
+                                </div>
+                            </div>
+
+                        <div class="form-group">
+                            <div class="form-line">
+                                <button type="submit" title="Save" onclick="SaveTimeSheet()" class="btn bg-purple waves-effect">Save</button>
+                            </div>
+                        </div>
+
+
+                        <br>
+                        <div id="errodiv" style="display:none;" class="alert alert-danger"></div>
+                        <div id="sucessodiv" style="display:none;" class="alert alert-success"></div>
+                        <br>
+                        <span><h3> TASKS </h3></span>
+
+                       <div class="form-group">
+                                <div class="form-line">
+                                    Client
+                                    <select class="form-control" id="selectClient" asp-items="@(new SelectList(@Model.listClient,"ClientId","ClientName"))"></select>
+                                </div>
+                       </div>
+
+                        <div class="form-group">
+                            <div class="form-line">
+                                Title
+                                <input type="text" id="title" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-line">
+                                Description
+                                <input type="text" id="valueTask" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            Type Description
+                            <select id="typeDescrition" class="form-control" onchange="ChangeValueTypeField()">
+                                @* <option></option> *@
+                                <option value="2">Prospect</option>
+                                <option value="3">Date</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-line">
+                                <button type="button" title="AddTask" onclick="SaveTask()" class="btn bg-purple waves-effect">Save Task</button>
+                            </div>
+                        </div>
+
+                        <br>
+                        <div class="body table-responsive">
+                            <table id="tableTask" class="table">
+                                <tr>
+                                    <th>Client Id</th>
+                                    <th>Client</th>
+                                    <th>Title</th>
+                                    <th>Valor</th>
+                                    <th>Field Type</th>
+                                    <th>Field Name</th>
+                                </tr>
+
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<<script src="~/scripts/jquery.unobtrusive-ajax.js"></script>
+<script src="~/scripts/jquery.unobtrusive-ajax.min.js"></script>
+<script>
+    var jsonRequestTask = '';
+    var taskQtd = 0;
+
+    window.onload = function() {
+        $('#timeSpent').inputmask('99:99');
+        $('#workFedDate').inputmask('99/99/9999');
+    };     
+
+    function MsgErro(msg){
+        $('#errodiv').show();
+        $('#sucessodiv').hide();
+        $('#errodiv').html(msg);
+        $('#sucessodiv').html('');
+    }
+    function MsgSucesso(msg){
+        $('#errodiv').hide();
+        $('#sucessodiv').show();
+        $('#errodiv').html('');
+        $('#sucessodiv').html(msg);
+    }     
+
+    function ChangeValueTypeField(){
+        if ($("#typeDescrition option:selected").val() == 3)
+            $('#valueTask').inputmask('99/99/9999');
+        else 
+            $('#valueTask').inputmask('remove');
+    }
+
+    function SaveTask()
+    {
+        if (taskQtd >= 3)
+        {
+            MsgErro('Maximum task limit reached');
+            return;
+        }
+
+        if ($('#title').val() == '' || $('#title').val() == undefined ||  $('#title').val() == null){
+            MsgErro('Invalid Title');
+            return;
+        }
+
+        var title = $('#title').val();
+
+        if ($('#valueTask').val() == '' || $('#valueTask').val() == undefined ||  $('#valueTask').val() == null){
+            MsgErro('Invalid Description');
+            return;
+        }
+
+        var valueTask = $('#valueTask').val();
+
+        var typeDescritionId = $("#typeDescrition option:selected").val();
+        var typeDescrition = $("#typeDescrition option:selected").text();
+
+        var clientId = $("#selectClient option:selected").val();
+        var clientDescrition = $("#selectClient option:selected").text();
+
+      const novaLinha = "<tr><th>"+clientId + "</th><th>"+ clientDescrition +"</th><th>" + title + "</th><th>" + valueTask + "</th><th>" + typeDescritionId + "</th><th>" + typeDescrition + "</th></tr>";
+      $("#tableTask tbody tr:first").after(novaLinha); // Adiciona após a primeira linha
+
+      jsonRequestTask =  jsonRequestTask + ((jsonRequestTask != null && jsonRequestTask != undefined && jsonRequestTask != '') ? ',' : '') + '{ "ClientId" : ' + clientId + ', "Title" : "' + title + '" , "Value" : "' + valueTask + '" , "FieldType" : ' + typeDescritionId + ' , "FieldName" : "' + typeDescrition +  '" } ';
+      taskQtd++;
+    }
+
+    function SaveTimeSheet()
+    {
+        if (taskQtd <= 0)
+        {
+            MsgErro('add at least one task');
+            return;
+        }
+
+        var projectId = $("#selectProject option:selected").val();
+
+        var userId = $("#selectUser option:selected").val();
+
+        if ($('#workFedDate').val() == '' || $('#workFedDate').val() == undefined ||  $('#workFedDate').val() == null){
+            MsgErro('Invalid WorkFedDate');
+            return;
+        }
+
+        try{
+            Date.parse($('#workFedDate').val());
+        }
+        catch{
+            MsgErro('Invalid WorkFedDate');
+            return;
+        }
+    
+        if ($('#timeSpent').val() == '' || $('#timeSpent').val() == undefined ||  $('#timeSpent').val() == null || $('#timeSpent').val() == '00:00'){
+            MsgErro('Invalid Time Spent');
+            return;
+        }
+
+        var jsonRequest =  '{ "UserId" : ' + userId + ', "ProjectId" : ' + projectId + ', "WorkfedDate" : "' + new Date($('#workFedDate').val()).toISOString()  + '", "TimeSpent" : "' +  $('#timeSpent').val() + ':00", "listTask" : [';
+        
+        // $('#tableTask').find('tbody > tr').each(function(){
+        //     $(this).find('td').eq(1).text();
+        //    // jsonRequest 
+        // });
+
+        var jsonRequest =  jsonRequest + jsonRequestTask;
+
+        jsonRequest = jsonRequest +  "] }";
+        console.log(jsonRequest);
+        console.log(JSON.parse(jsonRequest));
+        
+        $.post("/TimeSheet/InsertTimeSheet", { "dto" : jsonRequest })
+            .done(function(response, status, jqxhr){
+                if (response) {
+                        MsgSucesso('TimeSheet Insert!')
+
+                    } else {
+                       MsgErro('Error Insert TimeSheet!');
+                    }
+            })
+            .fail(function(jqxhr, status, error){
+                 MsgErro('Error Insert TimeSheet!');
+            });
+    }
+
+</script>
+

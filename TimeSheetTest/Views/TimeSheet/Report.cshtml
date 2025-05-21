@@ -1,0 +1,222 @@
+﻿@model TimeSheetTeste.Models.TimeSheetExportRequestDto
+
+@{
+    ViewBag.Title = "Export TimeSheet";
+}
+
+<div class="block-header">
+    <h2><strong>EXPORT TIMESHEET</strong></h2>
+</div>
+<!-- Input -->
+<div class="row clearfix">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+
+
+            <div class="body">
+
+                <div class="row clearfix">
+
+                    <div id="errodiv" style="display:none;" class="alert alert-danger"></div>
+                    <div id="sucessodiv" style="display:none;" class="alert alert-success"></div>
+
+                    <div class="col-sm-12">
+                        @using (Html.BeginForm("ExportTimeSheet", "TimeSheet", FormMethod.Post))
+                        {
+                            <div class="form-group">
+                                <div class="form-line">
+                                    <div class="switch">
+                                        <label><input type="checkbox" asp-for="ShowClient" checked><span class="lever"></span>Client</label>
+                                    </div>
+                                    <select class="form-control" asp-for="ClientId" asp-items="@(new SelectList(@Model.listClient,"ClientId","ClientName"))"></select>
+                                    
+                                </div>
+                            </div>
+                            
+
+
+                            <div class="form-group">
+                                <div class="form-line">
+                                    <div class="switch">
+                                        <label><input type="checkbox" asp-for="ShowProject" checked><span class="lever"></span>Project</label>
+                                    </div>
+                                    <select class="form-control" asp-for="ProjectId" asp-items="@(new SelectList(@Model.listProject,"ProjectId","ProjectName"))"></select>
+                                </div>
+                                
+                            </div>
+
+
+                            <div class="form-group">
+                                <div class="form-line">
+                                    <div class="switch">
+                                        <label><input type="checkbox" asp-for="ShowProspect" checked><span class="lever"></span>Prospect</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+
+                            <div class="form-group">
+                                <div class="form-line">
+                                    <div class="switch">
+                                        <label><input type="checkbox" asp-for="ShowWorkFedDate" checked><span class="lever"></span>Workfed</label>
+                                    </div>
+                                    @* @Html.TextBox("WorkFedDate", null, new { id = "WorkFedDate", @class = "form-control" }) *@
+                                    <input type="textbox" asp-for="WorkfedDate" id="WorkfedDate" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="form-line">
+                                    <button type="submit" title="Export" class="btn bg-purple waves-effect">Export</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+     window.onload = function() {
+        $('#WorkfedDate').inputmask('99/99/9999');
+    };
+
+    function MostrarDiv() {
+        $('#divdetalhesaluno').show();
+    }
+    function OcultarDiv() {
+        $('#divdetalhesaluno').hide();
+    }
+
+    function MsgErro(msg){
+        $('#errodiv').show();
+        $('#sucessodiv').hide();
+        $('#errodiv').html(msg);
+        $('#sucessodiv').html('');
+    }
+    function MsgSucesso(msg){
+        $('#errodiv').hide();
+        $('#sucessodiv').show();
+        $('#errodiv').html('');
+        $('#sucessodiv').html(msg);
+    }
+
+
+
+    function Excluir(item) {
+        debugger;
+        var tr = $(item).closest('tr');
+
+
+
+        $.ajax({
+            url: '/Usuario/DeletarAluno/',
+            data: {
+                idaluno: tr.children("td:nth-child(1)").text()
+            },
+            type: 'post',
+            datatype: 'json',
+            error: function () {
+
+            },
+            success: function (data, textStatus, XMLHttpRequest) {
+                if (data.IsSucesso) {
+                    tr.remove();
+                    MsgSucesso(data.Message);
+                    Cancelar();
+
+                } else if (data.IsErro) {
+                    MsgErro(data.Message);
+                    Cancelar();
+
+                }
+            }
+        });
+
+        //MsgSucesso("Excluido o aluno com id " + tr.children("td:nth-child(1)").text());
+
+    };
+
+    function Editar(item) {
+        debugger;
+        var tr = $(item).closest('tr');
+
+        var IdAluno = tr.children("td:nth-child(1)").text();
+        var nomecoluna = tr.children("td:nth-child(2)").text();
+        var racoluna = tr.children("td:nth-child(3)").text();
+        var periodocoluna = tr.children("td:nth-child(4)").text();
+        var cursocoluna = tr.children("td:nth-child(5)").text();
+
+        $('#txtidaluno').val(IdAluno);
+        $('#txtnome').val(nomecoluna);
+        $('#txtra').val(racoluna);
+        $("#ddlperiodo").val(periodocoluna).change();
+        $("#ddlcurso").val(cursocoluna).change();
+        //$("#ddlperiodo").val( $('option:contains("Bezerro")').val()).change();
+        MostrarDiv();
+
+
+
+
+    };
+
+    function LimparCampos() {
+        $('#txtidaluno').val('');
+        $('#txtnome').val('');
+        $('#txtra').val('');
+        $("#ddlperiodo").val(0).change();
+        $("#ddlcurso").val(0).change();
+    }
+
+    function Cancelar() {
+        OcultarDiv();
+        LimparCampos();
+    }
+
+    function AtualizarAluno() {
+
+        $.ajax({
+            url: '/Usuario/AtualizarAluno/',
+            data: {
+                idaluno: $("#txtidaluno").val(),
+                nomealuno: $("#txtnome").val(),
+                raluno: $("#txtra").val(),
+                idcurso: $("#ddlcurso").val(),
+                idperiodo: $("#ddlperiodo").val(),
+
+            },
+            type: 'post',
+            datatype: 'json',
+            error: function () {
+
+            },
+            success: function (data, textStatus, XMLHttpRequest) {
+                if (data.IsSucesso) {
+
+                    MsgSucesso(data.Message);
+                    Cancelar();
+
+                } else if (data.IsErro) {
+                    MsgErro(data.Message);
+                    Cancelar();
+
+                }
+            }
+        });
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+</script>
+
